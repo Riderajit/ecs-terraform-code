@@ -1,0 +1,20 @@
+version: 0.2
+phases:
+  pre_build:
+    commands:
+      - echo "Logging into Amazon ECR..."
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 499250238649.dkr.ecr.us-east-1.amazonaws.com
+  build:
+    commands:
+      - echo "Building the Docker image..."
+      - docker build -t php-app-repo .
+      - docker tag php-app-repo:latest 499250238649.dkr.ecr.us-east-1.amazonaws.com/php-app-repo:latest
+  post_build:
+    commands:
+      - echo "Pushing the Docker image to ECR..."
+      - docker push 499250238649.dkr.ecr.us-east-1.amazonaws.com/php-app-repo:latest
+      - echo "Creating imagedefinitions.json..."
+      - printf '[{"name":"php-container","imageUri":"%s"}]' $REPOSITORY_URI:latest > imagedefinitions.json
+artifacts:
+  files:
+    - imagedefinitions.json
